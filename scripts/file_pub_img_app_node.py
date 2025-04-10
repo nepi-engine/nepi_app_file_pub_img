@@ -41,6 +41,8 @@ from std_msgs.msg import UInt8, Int32, Float32, Empty, String, Bool, Header
 
 from sensor_msgs.msg import Image
 
+from nepi_api.node_if import NodeClassIF
+from nepi_api.sys_if_msg import MsgIF
 from nepi_api.sys_if_save_cfg import SaveCfgIF
 
 
@@ -92,11 +94,17 @@ class NepiFilePubImgApp(object):
   def __init__(self):
     #### APP NODE INIT SETUP ####
     nepi_ros.init_node(name= self.DEFAULT_NODE_NAME)
-    self.node_name = nepi_ros.get_node_name()
+    self.class_name = type(self).__name__
     self.base_namespace = nepi_ros.get_base_namespace()
-    nepi_msg.createMsgPublishers(self)
-    nepi_msg.publishMsgInfo(self,"Starting Initialization Processes")
-    ##############################
+    self.node_name = nepi_ros.get_node_name()
+    self.node_namespace = nepi_ros.get_node_namespace()
+
+    ##############################  
+    # Create Msg Class
+    self.msg_if = MsgIF(log_name = self.class_name)
+    self.msg_if.pub_info("Starting IF Initialization Processes")
+
+    ##############################     
     # Init Param Server
     self.initCb(do_updates = False)
 
@@ -136,7 +144,7 @@ class NepiFilePubImgApp(object):
 
     ##############################
     ## Initiation Complete
-    nepi_msg.publishMsgInfo(self," Initialization Complete")
+    self.msg_if.pub_info(" Initialization Complete")
     self.publish_status()
     # Spin forever (until object is detected)
     rospy.spin()
@@ -232,13 +240,13 @@ class NepiFilePubImgApp(object):
     update_status = False
     # Get settings from param server
     current_folder = rospy.get_param('~current_folder', self.init_current_folder)
-    #nepi_msg.publishMsgWarn(self,"Current Folder: " + str(current_folder))
-    #nepi_msg.publishMsgWarn(self,"Last Folder: " + str(self.last_folder))
+    #self.msg_if.pub_warn("Current Folder: " + str(current_folder))
+    #self.msg_if.pub_warn("Last Folder: " + str(self.last_folder))
     # Update folder info
     if current_folder != self.last_folder:
       update_status = True
       if os.path.exists(current_folder):
-        #nepi_msg.publishMsgWarn(self,"Current Folder Exists")
+        #self.msg_if.pub_warn("Current Folder Exists")
         current_paths = nepi_utils.get_folder_list(current_folder)
         current_folders = []
         for path in current_paths:
@@ -246,7 +254,7 @@ class NepiFilePubImgApp(object):
           if folder[0] != ".":
             current_folders.append(folder)
         self.current_folders = sorted(current_folders)
-        #nepi_msg.publishMsgWarn(self,"Folders: " + str(self.current_folders))
+        #self.msg_if.pub_warn("Folders: " + str(self.current_folders))
         num_files = 0
         for f_type in self.SUPPORTED_FILE_TYPES:
           num_files = num_files + nepi_utils.get_file_count(current_folder,f_type)
@@ -286,7 +294,7 @@ class NepiFilePubImgApp(object):
 
 
   def pausePubCb(self,msg):
-    ##nepi_msg.publishMsgInfo(self,msg)
+    ##self.msg_if.pub_info(msg)
     self.paused = msg.data
     self.publish_status()
 
@@ -312,7 +320,7 @@ class NepiFilePubImgApp(object):
       w = int(size_list[1])
       success = True
     except Exception as e:
-      nepi_msg.publishMsgWarn(self, "Unable to parse size message: " + new_size + " " + str(e) )
+      self.msg_if.pub_warn( "Unable to parse size message: " + new_size + " " + str(e) )
 
     if success:
       if h >= self.MIN_SIZE and h <= self.MAX_SIZE and w >= self.MIN_SIZE and w <= self.MAX_SIZE:
@@ -320,7 +328,7 @@ class NepiFilePubImgApp(object):
         self.width = w
         self.height = h
       else:
-        nepi_msg.publishMsgWarn(self, "Received size out of range: " + new_size )
+        self.msg_if.pub_warn( "Received size out of range: " + new_size )
     self.publish_status()
 
   def setEncodingCb(self,msg):
@@ -330,12 +338,12 @@ class NepiFilePubImgApp(object):
     self.publish_status()
 
   def setRandomCb(self,msg):
-    ##nepi_msg.publishMsgInfo(self,msg)
+    ##self.msg_if.pub_info(msg)
     rospy.set_param('~random',msg.data)
     self.publish_status()
 
   def setDelayCb(self,msg):
-    ##nepi_msg.publishMsgInfo(self,msg)
+    ##self.msg_if.pub_info(msg)
     delay = msg.data
     if delay < self.MIN_DELAY:
       delay = self.MIN_DELAY
@@ -345,7 +353,7 @@ class NepiFilePubImgApp(object):
     self.publish_status()
 
   def setOverlayCb(self,msg):
-    ##nepi_msg.publishMsgInfo(self,msg)
+    ##self.msg_if.pub_info(msg)
     overlay = msg.data
     rospy.set_param('~overlay',overlay)
     self.publish_status()
@@ -368,17 +376,17 @@ class NepiFilePubImgApp(object):
           [file_list, num_files] = nepi_utils.get_file_list(current_folder,f_type)
           self.file_list.extend(file_list)
           self.num_files += num_files
-          #nepi_msg.publishMsgWarn(self,"File Pub List: " + str(self.file_list))
-          #nepi_msg.publishMsgWarn(self,"File Pub Count: " + str(self.num_files))
+          #self.msg_if.pub_warn("File Pub List: " + str(self.file_list))
+          #self.msg_if.pub_warn("File Pub Count: " + str(self.num_files))
         if self.num_files > 0:
           self.current_ind = 0
           rospy.Timer(rospy.Duration(1), self.publishCb, oneshot = True)
           running = True
           rospy.set_param('~running',True)
         else:
-          nepi_msg.publishMsgInfo(self,"No image files found in folder " + current_folder + " not found")
+          self.msg_if.pub_info("No image files found in folder " + current_folder + " not found")
       else:
-        nepi_msg.publishMsgInfo(self,"Folder " + current_folder + " not found")
+        self.msg_if.pub_info("Folder " + current_folder + " not found")
     self.publish_status()
 
   def stopPubCb(self,msg):
@@ -419,7 +427,7 @@ class NepiFilePubImgApp(object):
           self.current_ind = self.num_files-1
         file2open = self.file_list[self.current_ind]
         self.current_file = file2open.split('/')[-1]
-        #nepi_msg.publishMsgInfo(self,"Opening File: " + file2open)
+        #self.msg_if.pub_info("Opening File: " + file2open)
         cv2_img = cv2.imread(file2open)
 
         cv2_img = cv2.resize(cv2_img,(self.width,self.height))
@@ -479,7 +487,7 @@ class NepiFilePubImgApp(object):
   # Node Cleanup Function
   
   def cleanup_actions(self):
-    nepi_msg.publishMsgInfo(self," Shutting down: Executing script cleanup actions")
+    self.msg_if.pub_info(" Shutting down: Executing script cleanup actions")
 
 
 #########################################
