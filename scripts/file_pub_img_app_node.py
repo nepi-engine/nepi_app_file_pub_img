@@ -118,37 +118,37 @@ class NepiFilePubImgApp(object):
             'reset_callback': self.resetCb,
             'factory_reset_callback': self.factoryResetCb,
             'init_configs': True,
-            'namespace': '~'
+            'namespace': self.node_namespace
     }
 
     # Params Config Dict ####################
     self.PARAMS_DICT = {
         'current_folder': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'factory_val': []
         },
         'size': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'factory_val': self.FACTORY_IMG_SIZE
         },
         'encoding': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'factory_val': self.FACTORY_IMG_ENCODING_OPTION
         },
         'random': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'factory_val': self.False
         },
         'overaly': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'factory_val': self.False
         },
         'delay': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'factory_val': self.FACTORY_IMG_PUB_DELAY
         },
         'running': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'factory_val': self.False
         }
     }
@@ -156,7 +156,7 @@ class NepiFilePubImgApp(object):
     # Publishers Config Dict ####################
     self.PUBS_DICT = {
         'status': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'status',
             'msg': FilePubImgStatus,
             'qsize': 1,
@@ -167,7 +167,7 @@ class NepiFilePubImgApp(object):
     # Subscribers Config Dict ####################
     self.SUBS_DICT = {
         'select_folder': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'select_folder',
             'msg': Float32,
             'qsize': None,
@@ -175,7 +175,7 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'home_folder': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'home_folder',
             'msg': Empty,
             'qsize': None,
@@ -183,7 +183,7 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'back_folder': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'back_folder',
             'msg': Empty,
             'qsize': None,
@@ -191,7 +191,7 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'set_size': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'set_size',
             'msg': String,
             'qsize': None,
@@ -199,7 +199,7 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'set_encoding': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'set_encoding',
             'msg': String,
             'qsize': None,
@@ -207,7 +207,7 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'set_delay': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'set_delay',
             'msg': Float32,
             'qsize': None,
@@ -215,7 +215,7 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'set_random': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'set_random',
             'msg': Bool,
             'qsize': None,
@@ -223,7 +223,7 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'set_overlay': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'set_overlay',
             'msg': Bool,
             'qsize': None,
@@ -231,7 +231,7 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'start_pub': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'start_pub',
             'msg': Empty,
             'qsize': None,
@@ -239,7 +239,7 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'stop_pub': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'stop_pub',
             'msg': Empty,
             'qsize': None,
@@ -247,7 +247,7 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'pause_pub': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'pause_pub',
             'msg': Bool,
             'qsize': None,
@@ -255,7 +255,7 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'step_forward': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'step_forward',
             'msg': Empty,
             'qsize': None,
@@ -263,13 +263,13 @@ class NepiFilePubImgApp(object):
             'callback_args': ()
         },
         'step_backward': {
-            'namespace': '~',
+            'namespace': self.node_namespace,
             'topic': 'step_backward',
             'msg': Empty,
             'qsize': None,
             'callback': self.stepBackwardPubCb, 
             'callback_args': ()
-        },
+        }
     }
 
 
