@@ -31,8 +31,6 @@ import random
 
 from nepi_sdk import nepi_ros
 from nepi_sdk import nepi_utils
-from nepi_sdk import nepi_save
-from nepi_sdk import nepi_msg
 from nepi_sdk import nepi_img 
 
 from nepi_app_file_pub_img.msg import FilePubImgStatus
@@ -43,7 +41,7 @@ from sensor_msgs.msg import Image
 
 from nepi_api.node_if import NodeClassIF
 from nepi_api.messages_if import MsgIF
-from nepi_api.sys_if_save_cfg import SaveCfgIF
+from nepi_api.system_if import SaveCfgIF
 
 
 
@@ -105,12 +103,11 @@ class NepiFilePubImgApp(object):
     self.msg_if.pub_info("Starting IF Initialization Processes")
 
     ##############################     
-    # Init Param Server
-    self.initCb(do_updates = False)
+    # Initialize Class Variables
+
 
     ##############################
     ### Setup Node
-
 
     # Configs Config Dict ####################
     self.CFGS_DICT = {
@@ -155,7 +152,7 @@ class NepiFilePubImgApp(object):
 
     # Publishers Config Dict ####################
     self.PUBS_DICT = {
-        'status': {
+        'status_pub': {
             'namespace': self.node_namespace,
             'topic': 'status',
             'msg': FilePubImgStatus,
@@ -303,8 +300,7 @@ class NepiFilePubImgApp(object):
   ### App Config Functions
 
 
-  def factoryResetCb(self):
-    self.publish_status()
+
 
 
   def initCb(self,do_updates = False):
@@ -314,6 +310,8 @@ class NepiFilePubImgApp(object):
   def resetCb(self,do_updates = True):
     self.publish_status()
 
+  def factoryResetCb(self):
+    self.publish_status()
 
   ###################
   ## Status Publisher
