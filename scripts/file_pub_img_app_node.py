@@ -42,6 +42,7 @@ from sensor_msgs.msg import Image
 from nepi_api.node_if import NodeClassIF
 from nepi_api.messages_if import MsgIF
 from nepi_api.system_if import SaveCfgIF
+from nepi_api.data_if import ImageIF
 
 
 
@@ -77,7 +78,8 @@ class NepiFilePubImgApp(object):
   last_folder = ""
 
   file_count = 0
-  pub_pub = None
+
+  image_if = None
 
   oneshot_offset = 1
 
@@ -133,10 +135,6 @@ class NepiFilePubImgApp(object):
             'factory_val': self.FACTORY_IMG_ENCODING_OPTION
         },
         'random': {
-            'namespace': self.node_namespace,
-            'factory_val': self.False
-        },
-        'overaly': {
             'namespace': self.node_namespace,
             'factory_val': self.False
         },
@@ -219,14 +217,6 @@ class NepiFilePubImgApp(object):
             'callback': self.setRandomCb, 
             'callback_args': ()
         },
-        'set_overlay': {
-            'namespace': self.node_namespace,
-            'topic': 'set_overlay',
-            'msg': Bool,
-            'qsize': None,
-            'callback': self.setOverlayCb, 
-            'callback_args': ()
-        },
         'start_pub': {
             'namespace': self.node_namespace,
             'topic': 'start_pub',
@@ -281,6 +271,8 @@ class NepiFilePubImgApp(object):
 
     ready = self.node_if.wait_for_ready()
 
+
+
     ##############################
     self.initCb(do_updates = True)
 
@@ -298,8 +290,6 @@ class NepiFilePubImgApp(object):
 
 #######################
   ### App Config Functions
-
-
 
 
 
@@ -383,7 +373,7 @@ class NepiFilePubImgApp(object):
       self.last_folder = current_folder
     # Start publishing if needed
     running = self.node_if.get_param('running')
-    if running and self.pub_pub == None:
+    if running and self.image_if == None:
       self.startPub()
       update_status = True
     # Publish status if needed
@@ -473,20 +463,13 @@ class NepiFilePubImgApp(object):
     self.node_if.set_param('delay',delay)
     self.publish_status()
 
-  def setOverlayCb(self,msg):
-    ##self.msg_if.pub_info(msg)
-    overlay = msg.data
-    self.node_if.set_param('overlay',overlay)
-    self.publish_status()
-
-
 
   def startPubCb(self,msg):
     self.startPub()
 
   def startPub(self):
-    if self.pub_pub == None:
-      self.pub_pub = self.nepi_ros.create_publisher("~images", Image, queue_size=1, latch=True)
+    if self.image_if == None:
+      self.image_if = ImageIF(namespace = self.node_namespace, topic = 'image')
       time.sleep(1)
       current_folder = self.node_if.get_param('current_folder')
       # Now start publishing images
@@ -515,10 +498,10 @@ class NepiFilePubImgApp(object):
     running = False
     self.node_if.set_param('running',False)
     time.sleep(1)
-    if self.pub_pub != None:
-      self.pub_pub.unregister()
+    if self.image_if != None:
+      self.image_if.unregister()
       time.sleep(1)
-      self.pub_pub = None
+      self.image_if = None
     self.current_file = "None"
     self.publish_status()
 
@@ -535,7 +518,7 @@ class NepiFilePubImgApp(object):
       step = 1
     self.oneshot_offset = 0
     if running :
-      if self.pub_pub != None:
+      if self.image_if != None:
         # Set current index
         if set_random == True and self.paused == False:
           self.current_ind = int(random.random() * self.num_files)
@@ -576,10 +559,7 @@ class NepiFilePubImgApp(object):
           cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2GRAY)
         if encoding != 'mono8' and img_shape[2] == 1:
           cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_GRAY2BGR)
-        out_img_msg = nepi_img.cv2img_to_rosimg(cv2_img,encoding=encoding)      
-        if not self.nepi_ros.wait_for_node():
-          out_img_msg.header.stamp = self.nepi_ros.ros_time_now()
-          self.pub_pub.publish(out_img_msg)
+        self.image_if.publish_cv2_image(cv2_img, encoding = encoding)
 
     running = self.node_if.get_param('running')
     if running == True:
@@ -591,10 +571,10 @@ class NepiFilePubImgApp(object):
       self.nepi_ros.start_timer_process(.001), self.publishCb, oneshot = True)
     else:
       self.current_ind = 0
-      if self.pub_pub != None:
-        self.pub_pub.unregister()
+      if self.image_if != None:
+        self.image_if.unregister()
         time.sleep(1)
-        self.pub_pub = None
+        self.image_if = None
 
 
 
