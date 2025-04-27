@@ -508,7 +508,7 @@ class NepiFilePubImgApp(object):
 
   def publishCb(self,timer):
     running = self.node_if.get_param('running')
-    size = self.node_if.get_param('size',self.init_size)
+    size = self.node_if.get_param('size')
     encoding = self.node_if.get_param('encoding')
     set_random = self.node_if.get_param('random')
     overlay = self.node_if.get_param('overlay')
