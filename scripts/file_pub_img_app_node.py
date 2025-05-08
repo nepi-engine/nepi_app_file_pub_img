@@ -41,7 +41,6 @@ from sensor_msgs.msg import Image
 
 from nepi_api.node_if import NodeClassIF
 from nepi_api.messages_if import MsgIF
-from nepi_api.system_if import SaveCfgIF
 from nepi_api.data_if import ImageIF
 
 
@@ -136,7 +135,7 @@ class NepiFilePubImgApp(object):
         },
         'random': {
             'namespace': self.node_namespace,
-            'factory_val': self.False
+            'factory_val': False
         },
         'delay': {
             'namespace': self.node_namespace,
@@ -144,7 +143,7 @@ class NepiFilePubImgApp(object):
         },
         'running': {
             'namespace': self.node_namespace,
-            'factory_val': self.False
+            'factory_val': False
         }
     }
 
@@ -484,7 +483,7 @@ class NepiFilePubImgApp(object):
           #self.msg_if.pub_warn("File Pub Count: " + str(self.num_files))
         if self.num_files > 0:
           self.current_ind = 0
-          self.nepi_ros.start_timer_process(1), self.publishCb, oneshot = True)
+          self.nepi_ros.start_timer_process(1, self.publishCb, oneshot = True)
           running = True
           self.node_if.set_param('running',True)
         else:
@@ -568,7 +567,7 @@ class NepiFilePubImgApp(object):
         if delay < 0:
           delay == 0
         nepi_ros.sleep(delay)
-      self.nepi_ros.start_timer_process(.001), self.publishCb, oneshot = True)
+      self.nepi_ros.start_timer_process(.001, self.publishCb, oneshot = True)
     else:
       self.current_ind = 0
       if self.image_if != None:
