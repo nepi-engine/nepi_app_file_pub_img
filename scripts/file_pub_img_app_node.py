@@ -33,6 +33,7 @@ from nepi_sdk import nepi_ros
 from nepi_sdk import nepi_utils
 from nepi_sdk import nepi_img 
 
+
 from nepi_app_file_pub_img.msg import FilePubImgStatus
 
 from std_msgs.msg import UInt8, Int32, Float32, Empty, String, Bool, Header
@@ -41,7 +42,7 @@ from sensor_msgs.msg import Image
 
 from nepi_api.node_if import NodeClassIF
 from nepi_api.messages_if import MsgIF
-from nepi_api.system_if import SaveCfgIF
+from nepi_api.system_if import SaveDataIF
 from nepi_api.data_if import ImageIF
 
 
@@ -124,7 +125,7 @@ class NepiFilePubImgApp(object):
     self.PARAMS_DICT = {
         'current_folder': {
             'namespace': self.node_namespace,
-            'factory_val': []
+            'factory_val': self.HOME_FOLDER
         },
         'size': {
             'namespace': self.node_namespace,
@@ -136,7 +137,7 @@ class NepiFilePubImgApp(object):
         },
         'random': {
             'namespace': self.node_namespace,
-            'factory_val': self.False
+            'factory_val': False
         },
         'delay': {
             'namespace': self.node_namespace,
@@ -144,7 +145,7 @@ class NepiFilePubImgApp(object):
         },
         'running': {
             'namespace': self.node_namespace,
-            'factory_val': self.False
+            'factory_val': False
         }
     }
 
@@ -278,14 +279,14 @@ class NepiFilePubImgApp(object):
 
     ##############################
     # Start updater process
-    self.nepi_ros.start_timer_process(self.UPDATER_DELAY_SEC, self.updaterCb)
+    nepi_ros.start_timer_process(self.UPDATER_DELAY_SEC, self.updaterCb)
 
     ##############################
     ## Initiation Complete
     self.msg_if.pub_info(" Initialization Complete")
     self.publish_status()
     # Spin forever (until object is detected)
-    self.nepi_ros.spin()
+    nepi_ros.spin()
     ##############################
 
 #######################
@@ -339,7 +340,7 @@ class NepiFilePubImgApp(object):
     status_msg.set_delay = self.node_if.get_param('delay')
     status_msg.running = self.node_if.get_param('running')
 
-    self.status_pub.publish(status_msg)
+    self.node_if.publish_pub('sel_status_pub', status_msg)
 
 
 
@@ -484,7 +485,7 @@ class NepiFilePubImgApp(object):
           #self.msg_if.pub_warn("File Pub Count: " + str(self.num_files))
         if self.num_files > 0:
           self.current_ind = 0
-          self.nepi_ros.start_timer_process(1), self.publishCb, oneshot = True)
+          self.nepi_ros.start_timer_process(1, self.publishCb, oneshot = True)
           running = True
           self.node_if.set_param('running',True)
         else:
@@ -568,7 +569,7 @@ class NepiFilePubImgApp(object):
         if delay < 0:
           delay == 0
         nepi_ros.sleep(delay)
-      self.nepi_ros.start_timer_process(.001), self.publishCb, oneshot = True)
+      nepi_ros.start_timer_process(.001, self.publishCb, oneshot = True)
     else:
       self.current_ind = 0
       if self.image_if != None:
