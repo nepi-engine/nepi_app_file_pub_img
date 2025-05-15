@@ -33,6 +33,7 @@ from nepi_sdk import nepi_ros
 from nepi_sdk import nepi_utils
 from nepi_sdk import nepi_img 
 
+
 from nepi_app_file_pub_img.msg import FilePubImgStatus
 
 from std_msgs.msg import UInt8, Int32, Float32, Empty, String, Bool, Header
@@ -41,6 +42,8 @@ from sensor_msgs.msg import Image
 
 from nepi_api.node_if import NodeClassIF
 from nepi_api.messages_if import MsgIF
+
+from nepi_api.system_if import SaveDataIF
 from nepi_api.data_if import ImageIF
 
 
@@ -123,7 +126,7 @@ class NepiFilePubImgApp(object):
     self.PARAMS_DICT = {
         'current_folder': {
             'namespace': self.node_namespace,
-            'factory_val': []
+            'factory_val': self.HOME_FOLDER
         },
         'size': {
             'namespace': self.node_namespace,
@@ -134,6 +137,10 @@ class NepiFilePubImgApp(object):
             'factory_val': self.FACTORY_IMG_ENCODING_OPTION
         },
         'random': {
+            'namespace': self.node_namespace,
+            'factory_val': False
+        },
+        'overlay': {
             'namespace': self.node_namespace,
             'factory_val': False
         },
@@ -163,7 +170,7 @@ class NepiFilePubImgApp(object):
         'select_folder': {
             'namespace': self.node_namespace,
             'topic': 'select_folder',
-            'msg': Float32,
+            'msg': String,
             'qsize': None,
             'callback': self.selectFolderCb, 
             'callback_args': ()
@@ -255,7 +262,15 @@ class NepiFilePubImgApp(object):
             'qsize': None,
             'callback': self.stepBackwardPubCb, 
             'callback_args': ()
-        }
+        },
+        'set_overlay': {
+            'namespace': self.node_namespace,
+            'topic': 'set_overlay',
+            'msg': Bool,
+            'qsize': None,
+            'callback': self.setOverlayCb, 
+            'callback_args': ()
+        },
     }
 
 
@@ -277,14 +292,14 @@ class NepiFilePubImgApp(object):
 
     ##############################
     # Start updater process
-    self.nepi_ros.start_timer_process(self.UPDATER_DELAY_SEC, self.updaterCb)
+    nepi_ros.start_timer_process(self.UPDATER_DELAY_SEC, self.updaterCb)
 
     ##############################
     ## Initiation Complete
     self.msg_if.pub_info(" Initialization Complete")
     self.publish_status()
     # Spin forever (until object is detected)
-    self.nepi_ros.spin()
+    nepi_ros.spin()
     ##############################
 
 #######################
@@ -338,7 +353,7 @@ class NepiFilePubImgApp(object):
     status_msg.set_delay = self.node_if.get_param('delay')
     status_msg.running = self.node_if.get_param('running')
 
-    self.status_pub.publish(status_msg)
+    self.node_if.publish_pub('status_pub', status_msg)
 
 
 
@@ -452,6 +467,12 @@ class NepiFilePubImgApp(object):
     self.node_if.set_param('random',msg.data)
     self.publish_status()
 
+  def setOverlayCb(self,msg):
+      ##self.msg_if.pub_info(msg)
+      overlay = msg.data
+      self.node_if.set_param('overlay',overlay)
+      self.publish_status()
+
   def setDelayCb(self,msg):
     ##self.msg_if.pub_info(msg)
     delay = msg.data
@@ -483,7 +504,7 @@ class NepiFilePubImgApp(object):
           #self.msg_if.pub_warn("File Pub Count: " + str(self.num_files))
         if self.num_files > 0:
           self.current_ind = 0
-          self.nepi_ros.start_timer_process(1, self.publishCb, oneshot = True)
+          nepi_ros.start_timer_process(1, self.publishCb, oneshot = True)
           running = True
           self.node_if.set_param('running',True)
         else:
@@ -558,7 +579,7 @@ class NepiFilePubImgApp(object):
           cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2GRAY)
         if encoding != 'mono8' and img_shape[2] == 1:
           cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_GRAY2BGR)
-        self.image_if.publish_cv2_image(cv2_img, encoding = encoding)
+        self.image_if.publish_cv2_img(cv2_img, encoding = encoding)
 
     running = self.node_if.get_param('running')
     if running == True:
@@ -567,7 +588,8 @@ class NepiFilePubImgApp(object):
         if delay < 0:
           delay == 0
         nepi_ros.sleep(delay)
-      self.nepi_ros.start_timer_process(.001, self.publishCb, oneshot = True)
+
+      nepi_ros.start_timer_process(.001, self.publishCb, oneshot = True)
     else:
       self.current_ind = 0
       if self.image_if != None:
