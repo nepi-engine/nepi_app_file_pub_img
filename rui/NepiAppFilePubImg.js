@@ -29,7 +29,7 @@ import Styles from "./Styles"
 import BooleanIndicator from "./BooleanIndicator"
 
 
-import CameraViewer from "./CameraViewer"
+import ImageViewer from "./Nepi_IF_ImageViewer"
 
 import { onDropdownSelectedSendStr, createMenuListFromStrList,  onUpdateSetStateValue, onEnterSendFloatValue} from "./Utilities"
 
@@ -370,7 +370,7 @@ class FilePubImgApp extends Component {
     <Columns>
       <Column>
 
-          <CameraViewer
+          <ImageViewer
             imageTopic={appImageTopic}
             title={this.state.imageText}
             hideQualitySelector={false}
