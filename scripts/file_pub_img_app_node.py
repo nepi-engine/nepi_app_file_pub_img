@@ -482,7 +482,7 @@ class NepiFilePubImgApp(object):
 
   def startPub(self):
     if self.image_if == None:
-      self.image_if = ImageIF(namespace = self.node_namespace, topic = 'image')
+      self.image_if = ImageIF(namespace = self.node_namespace, topic = 'images')
       time.sleep(1)
       current_folder = self.node_if.get_param('current_folder')
       # Now start publishing images
