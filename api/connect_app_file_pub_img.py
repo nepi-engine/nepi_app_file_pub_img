@@ -21,6 +21,7 @@ from nepi_sdk import nepi_ros
 from nepi_sdk import nepi_utils
 from nepi_sdk import nepi_img 
 
+from nepi_ros_interfaces.msg import SaveDataRate, SaveDataStatus
 
 from nepi_app_file_pub_img.msg import FilePubImgStatus
 
@@ -280,7 +281,7 @@ class ConnectAppFilePubImgIF:
             while self.connected == False and timer < timeout and not nepi_ros.is_shutdown():
                 nepi_ros.sleep(.1)
                 timer = nepi_ros.get_time() - time_start
-            if self.connected == False:folder_name
+            if self.connected == False:
                 self.msg_if.pub_info("Failed to Connect")
             else:
                 self.msg_if.pub_info("Connected")
