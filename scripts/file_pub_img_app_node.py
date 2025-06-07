@@ -25,7 +25,7 @@ import random
 
 
 
-from nepi_sdk import nepi_ros
+from nepi_sdk import nepi_sdk
 from nepi_sdk import nepi_utils
 from nepi_sdk import nepi_img 
 
@@ -89,11 +89,11 @@ class NepiFilePubImgApp(object):
   DEFAULT_NODE_NAME = "app_file_pub_img" # Can be overwitten by luanch command
   def __init__(self):
     #### APP NODE INIT SETUP ####
-    nepi_ros.init_node(name= self.DEFAULT_NODE_NAME)
+    nepi_sdk.init_node(name= self.DEFAULT_NODE_NAME)
     self.class_name = type(self).__name__
-    self.base_namespace = nepi_ros.get_base_namespace()
-    self.node_name = nepi_ros.get_node_name()
-    self.node_namespace = nepi_ros.get_node_namespace()
+    self.base_namespace = nepi_sdk.get_base_namespace()
+    self.node_name = nepi_sdk.get_node_name()
+    self.node_namespace = nepi_sdk.get_node_namespace()
 
     ##############################  
     # Create Msg Class
@@ -285,14 +285,14 @@ class NepiFilePubImgApp(object):
 
     ##############################
     # Start updater process
-    nepi_ros.start_timer_process(self.UPDATER_DELAY_SEC, self.updaterCb)
+    nepi_sdk.start_timer_process(self.UPDATER_DELAY_SEC, self.updaterCb)
 
     ##############################
     ## Initiation Complete
     self.msg_if.pub_info(" Initialization Complete")
     self.publish_status()
     # Spin forever (until object is detected)
-    nepi_ros.spin()
+    nepi_sdk.spin()
     ##############################
 
 #######################
@@ -497,7 +497,7 @@ class NepiFilePubImgApp(object):
           #self.msg_if.pub_warn("File Pub Count: " + str(self.num_files))
         if self.num_files > 0:
           self.current_ind = 0
-          nepi_ros.start_timer_process(1, self.publishCb, oneshot = True)
+          nepi_sdk.start_timer_process(1, self.publishCb, oneshot = True)
           running = True
           self.node_if.set_param('running',True)
         else:
@@ -580,9 +580,9 @@ class NepiFilePubImgApp(object):
         delay = self.node_if.get_param('delay')
         if delay < 0:
           delay == 0
-        nepi_ros.sleep(delay)
+        nepi_sdk.sleep(delay)
 
-      nepi_ros.start_timer_process(.001, self.publishCb, oneshot = True)
+      nepi_sdk.start_timer_process(.001, self.publishCb, oneshot = True)
     else:
       self.current_ind = 0
       if self.image_if != None:
