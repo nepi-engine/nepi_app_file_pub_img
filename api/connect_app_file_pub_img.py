@@ -21,7 +21,7 @@ from nepi_sdk import nepi_sdk
 from nepi_sdk import nepi_utils
 from nepi_sdk import nepi_img 
 
-from nepi_sdk_interfaces.msg import SaveDataRate, SaveDataStatus
+from nepi_interfaces.msg import SaveDataRate, SaveDataStatus
 
 from nepi_app_file_pub_img.msg import FilePubImgStatus
 
