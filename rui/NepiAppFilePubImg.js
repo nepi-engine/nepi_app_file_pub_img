@@ -363,7 +363,7 @@ class FilePubImgApp extends Component {
     const appNamespace = this.state.appNamespace
     const folderOptions = this.createFolderOptions()
     const pubRunning = this.state.pub_running
-    const appImageTopic = pubRunning === true ? this.state.appNamespace + "/images" : null
+    const appImageTopic = pubRunning === true ? this.state.appNamespace + "/color_image" : null
     const viewableFolders = (this.state.viewableFolders || pubRunning === false)
     return (
 

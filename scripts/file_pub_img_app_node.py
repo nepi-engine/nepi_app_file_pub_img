@@ -38,7 +38,7 @@ from sensor_msgs.msg import Image
 
 from nepi_api.node_if import NodeClassIF
 from nepi_api.messages_if import MsgIF
-from nepi_api.data_if import ImageIF
+from nepi_api.data_if import ColorImageIF
 
 
 
@@ -82,6 +82,9 @@ class NepiFilePubImgApp(object):
   default_size = FACTORY_IMG_SIZE.split('x')
   width = int(default_size[1])
   height = int(default_size[0])
+
+  width_deg = 100
+  height_deg = 70
 
 
   #######################
@@ -482,7 +485,16 @@ class NepiFilePubImgApp(object):
 
   def startPub(self):
     if self.image_if == None:
-      self.image_if = ImageIF(namespace = self.node_namespace, topic = 'images')
+      image_ns = self.node_namespace
+      data_product = 'color_image'
+      self.image_if = ColorImageIF(namespace = image_ns, 
+                  data_product_name = data_product, 
+                  data_source_description = 'file',
+                  data_ref_description = 'source',
+                  perspective = 'pov',
+                  log_name = data_product,
+                  msg_if = self.msg_if
+                  )
       time.sleep(1)
       current_folder = self.node_if.get_param('current_folder')
       # Now start publishing images
@@ -572,7 +584,12 @@ class NepiFilePubImgApp(object):
           cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2GRAY)
         if encoding != 'mono8' and img_shape[2] == 1:
           cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_GRAY2BGR)
-        self.image_if.publish_cv2_img(cv2_img, encoding = encoding)
+        frame_3d = 'sensor_frame'
+        self.image_if.publish_cv2_img(cv2_img, encoding = encoding,
+                                        frame_3d = frame_3d,
+                                        width_deg = self.width_deg,
+                                        height_deg = self.height_deg,
+                                        device_mount_description = 'unknown')
 
     running = self.node_if.get_param('running')
     if running == True:
