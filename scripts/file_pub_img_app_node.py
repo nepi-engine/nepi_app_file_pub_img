@@ -86,12 +86,12 @@ class NepiFilePubImgApp(object):
   width_deg = 100
   height_deg = 70
 
-  current_folder = self.HOME_FOLDER
-  size = self.FACTORY_IMG_SIZE
-  encoding = self.FACTORY_IMG_ENCODING_OPTION
+  current_folder = HOME_FOLDER
+  size = FACTORY_IMG_SIZE
+  encoding = FACTORY_IMG_ENCODING_OPTION
   random = False
   overlay = False
-  delay = self.FACTORY_IMG_PUB_DELAY
+  delay = FACTORY_IMG_PUB_DELAY
   running = False
 
 
