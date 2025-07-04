@@ -66,6 +66,7 @@ class NepiFilePubImgApp(object):
 
   UPDATER_DELAY_SEC = 1.0
   
+  node_if = None
   
   paused = False
   last_folder = ""
@@ -327,14 +328,18 @@ class NepiFilePubImgApp(object):
     self.publish_status
 
   def resetCb(self,do_updates = True):
-    if do_updates == True:
-      pass
-    self.initCb()
+      if self.node_if is not None:
+        self.node_if.reset_params()
+      if do_updates:
+          pass
+      self.initCb
 
   def factoryResetCb(self,do_updates = True):
-    if do_updates == True:
-      pass
-    self.initCb()
+      if self.node_if is not None:
+        self.node_if.factory_reset_params()
+      if do_updates:
+          pass
+      self.initCb
 
   ###################
   ## Status Publisher
@@ -371,8 +376,8 @@ class NepiFilePubImgApp(object):
     status_msg.min_max_delay = [self.MIN_DELAY, self.MAX_DELAY]
     status_msg.set_delay = self.delay 
     status_msg.running = self.running
-
-    self.node_if.publish_pub('status_pub', status_msg)
+    if self.node_if is not None:
+      self.node_if.publish_pub('status_pub', status_msg)
 
 
 
