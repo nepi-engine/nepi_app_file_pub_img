@@ -316,13 +316,13 @@ class NepiFilePubImgApp(object):
 
   def initCb(self,do_updates = False):
     if self.node_if is not None:
-      current_folder = self.node_if.get_param('current_folder')
-      size = self.node_if.get_param('size')
-      encoding = self.node_if.get_param('encoding')
-      random = self.node_if.get_param('random')
-      overlay = self.node_if.get_param('overlay')
-      delay = self.node_if.get_param('delay')
-      running = self.node_if.get_param('running')
+      self.current_folder = self.node_if.get_param('current_folder')
+      self.size = self.node_if.get_param('size')
+      self.encoding = self.node_if.get_param('encoding')
+      self.random = self.node_if.get_param('random')
+      self.overlay = self.node_if.get_param('overlay')
+      self.delay = self.node_if.get_param('delay')
+      self.running = self.node_if.get_param('running')
     if do_updates == True:
       pass
     self.publish_status
@@ -425,6 +425,7 @@ class NepiFilePubImgApp(object):
     if os.path.exists(new_path):
       self.last_folder = current_folder
       self.current_folder = new_path
+      self.publish_status()
       if self.node_if is not None:
         self.node_if.set_param('current_folder',new_path)
     self.publish_status()
