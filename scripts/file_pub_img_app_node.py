@@ -332,14 +332,14 @@ class NepiFilePubImgApp(object):
         self.node_if.reset_params()
       if do_updates:
           pass
-      self.initCb
+      self.initCb(do_updates = do_updates)
 
   def factoryResetCb(self,do_updates = True):
       if self.node_if is not None:
         self.node_if.factory_reset_params()
       if do_updates:
           pass
-      self.initCb
+      self.initCb(do_updates = do_updates)
 
   ###################
   ## Status Publisher
