@@ -22,6 +22,7 @@ import numpy as np
 import cv2
 import open3d as o3d
 import random
+import copy
 
 
 
@@ -290,7 +291,17 @@ class NepiFilePubImgApp(object):
                     subs_dict = self.SUBS_DICT
     )
 
-    ready = self.node_if.wait_for_ready()
+    image_ns = self.node_namespace
+    data_product = 'color_image'
+    self.image_if = ColorImageIF(namespace = image_ns, 
+                data_product_name = data_product, 
+                data_source_description = 'file',
+                data_ref_description = 'source',
+                perspective = 'pov',
+                log_name = data_product,
+                msg_if = self.msg_if
+                )
+
 
 
 
@@ -300,6 +311,9 @@ class NepiFilePubImgApp(object):
     ##############################
     # Start updater process
     nepi_sdk.start_timer_process(self.UPDATER_DELAY_SEC, self.updaterCb)
+
+
+
 
     ##############################
     ## Initiation Complete
@@ -324,7 +338,8 @@ class NepiFilePubImgApp(object):
       self.delay = self.node_if.get_param('delay')
       self.running = self.node_if.get_param('running')
     if do_updates == True:
-      pass
+      if self.node_if is not None and self.running == True:
+        self.startPub()
     self.publish_status
 
   def resetCb(self,do_updates = True):
@@ -535,21 +550,11 @@ class NepiFilePubImgApp(object):
 
 
   def startPubCb(self,msg):
+    self.msg_if.pub_info('Got start publishing msg: ' + str(msg))
     self.startPub()
 
   def startPub(self):
-    if self.image_if == None:
-      image_ns = self.node_namespace
-      data_product = 'color_image'
-      self.image_if = ColorImageIF(namespace = image_ns, 
-                  data_product_name = data_product, 
-                  data_source_description = 'file',
-                  data_ref_description = 'source',
-                  perspective = 'pov',
-                  log_name = data_product,
-                  msg_if = self.msg_if
-                  )
-      time.sleep(1)
+    if self.image_if != None:
       current_folder = self.current_folder
       # Now start publishing images
       self.file_list = []
@@ -564,11 +569,10 @@ class NepiFilePubImgApp(object):
         if self.num_files > 0:
           self.current_ind = 0
           nepi_sdk.start_timer_process(1, self.publishCb, oneshot = True)
-          running = True
+          self.running = True
           self.publish_status()
-          self.running = running
           if self.node_if is not None:
-            self.node_if.set_param('running',running)
+            self.node_if.set_param('running',True)
         else:
           self.msg_if.pub_info("No image files found in folder " + current_folder + " not found")
       else:
@@ -576,13 +580,9 @@ class NepiFilePubImgApp(object):
     self.publish_status()
 
   def stopPubCb(self,msg):
+    self.msg_if.pub_info('Got start publishing msg: ' + str(msg))
     self.running = False
     self.publish_status()
-    time.sleep(1)
-    if self.image_if != None:
-      self.image_if.unregister()
-      time.sleep(1)
-      self.image_if = None
     self.current_file = "None"
     if self.node_if is not None:
       self.node_if.set_param('running',False)
@@ -595,28 +595,38 @@ class NepiFilePubImgApp(object):
     encoding = self.encoding
     set_random = self.random
     overlay = self.overlay
+    oneshot_offset = copy.deepcopy(self.oneshot_offset)
+    self.oneshot_offset = 0
+    current_ind = copy.deepcopy(self.current_ind)
+    
     if self.paused:
-      step = self.oneshot_offset
+      step = oneshot_offset
     else:
       step = 1
-    self.oneshot_offset = 0
-    if running :
+    if running and step != 0:
+      #self.msg_if.pub_info("Start index and onshot: " + str([current_ind,oneshot_offset]))
+      #self.msg_if.pub_info("running")
       if self.image_if != None:
+        #self.msg_if.pub_info("pass check")
         # Set current index
+        
         if set_random == True and self.paused == False:
-          self.current_ind = int(random.random() * self.num_files)
+          current_ind = int(random.random() * self.num_files)
         else:
-          self.current_ind = self.current_ind + step
+          current_ind += step
         # Check ind bounds
-        if self.current_ind > (self.num_files-1):
-          self.current_ind = 0 # Start over
-        elif self.current_ind < 0:
-          self.current_ind = self.num_files-1
-        file2open = self.file_list[self.current_ind]
+        if current_ind > (self.num_files-1):
+          current_ind = 0 # Start over
+        elif current_ind < 0:
+          current_ind = self.num_files-1
+        
+        #self.msg_if.pub_info("pub index: " + str([current_ind]))
+        file2open = self.file_list[current_ind]
         self.current_file = file2open.split('/')[-1]
+        self.current_ind = current_ind
         #self.msg_if.pub_info("Opening File: " + file2open)
         cv2_img = cv2.imread(file2open)
-
+        #self.msg_if.pub_info("pub file: " + str(file2open))
         cv2_img = cv2.resize(cv2_img,(self.width,self.height))
 
         # Overlay Label
@@ -643,27 +653,24 @@ class NepiFilePubImgApp(object):
         if encoding != 'mono8' and img_shape[2] == 1:
           cv2_img = cv2.cvtColor(cv2_img, cv2.COLOR_GRAY2BGR)
         frame_3d = 'sensor_frame'
+        #self.msg_if.pub_info("Publishing")
         self.image_if.publish_cv2_img(cv2_img, encoding = encoding,
                                         frame_3d = frame_3d,
                                         width_deg = self.width_deg,
                                         height_deg = self.height_deg,
                                         device_mount_description = 'unknown')
-
+    
+    delay = 0.1
     running = self.running
-    if running == True:
-      if self.paused != True:
+    if running == True and self.paused == False:
         delay = self.delay
-        if delay < 0:
-          delay == 0
-        nepi_sdk.sleep(delay)
+        if self.delay > 0.001:
+          delay == self.delay
+    
 
-      nepi_sdk.start_timer_process(.001, self.publishCb, oneshot = True)
-    else:
-      self.current_ind = 0
-      if self.image_if != None:
-        self.image_if.unregister()
-        time.sleep(1)
-        self.image_if = None
+    #self.msg_if.pub_info("Delay: " + str(delay)) 
+    nepi_sdk.start_timer_process(delay, self.publishCb, oneshot = True)
+
 
 
 
