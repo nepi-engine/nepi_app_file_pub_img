@@ -403,39 +403,6 @@ class NepiFilePubImgApp(object):
   #############################
   ## APP callbacks
 
-  def updaterCb(self,timer):
-    update_status = False
-    # Get settings from param server
-    current_folder = self.current_folder
-    #self.msg_if.pub_warn("Current Folder: " + str(current_folder))
-    #self.msg_if.pub_warn("Last Folder: " + str(self.last_folder))
-    # Update folder info
-    if current_folder != self.last_folder:
-      update_status = True
-      if os.path.exists(current_folder):
-        #self.msg_if.pub_warn("Current Folder Exists")
-        current_paths = nepi_utils.get_folder_list(current_folder)
-        current_folders = []
-        for path in current_paths:
-          folder = os.path.basename(path)
-          if folder[0] != ".":
-            current_folders.append(folder)
-        self.current_folders = sorted(current_folders)
-        #self.msg_if.pub_warn("Folders: " + str(self.current_folders))
-        num_files = 0
-        for f_type in self.SUPPORTED_FILE_TYPES:
-          num_files = num_files + nepi_utils.get_file_count(current_folder,f_type)
-        self.file_count =  num_files
-      self.last_folder = current_folder
-    # Start publishing if needed
-    running = self.running
-    if running and self.image_if == None:
-      self.startPub()
-      update_status = True
-    # Publish status if needed
-    if update_status == True:
-      self.publish_status()
-
   def selectFolderCb(self,msg):
     current_folder = self.current_folder
     new_folder = msg.data
@@ -548,6 +515,39 @@ class NepiFilePubImgApp(object):
       self.node_if.set_param('delay',delay)
 
 
+  def updaterCb(self,timer):
+    update_status = False
+    # Get settings from param server
+    current_folder = self.current_folder
+    #self.msg_if.pub_warn("Current Folder: " + str(current_folder))
+    #self.msg_if.pub_warn("Last Folder: " + str(self.last_folder))
+    # Update folder info
+    if current_folder != self.last_folder:
+      update_status = True
+      if os.path.exists(current_folder):
+        #self.msg_if.pub_warn("Current Folder Exists")
+        current_paths = nepi_utils.get_folder_list(current_folder)
+        current_folders = []
+        for path in current_paths:
+          folder = os.path.basename(path)
+          if folder[0] != "." and folder != "line_data":
+            current_folders.append(folder)
+        self.current_folders = sorted(current_folders)
+        #self.msg_if.pub_warn("Folders: " + str(self.current_folders))
+        num_files = 0
+        for f_type in self.SUPPORTED_FILE_TYPES:
+          num_files = num_files + nepi_utils.get_file_count(current_folder,f_type)
+        self.file_count =  num_files
+      self.last_folder = current_folder
+    # Start publishing if needed
+    running = self.running
+    if running and self.image_if == None:
+      self.startPub()
+      update_status = True
+    # Publish status if needed
+    if update_status == True:
+      self.publish_status()
+
 
   def startPubCb(self,msg):
     self.msg_if.pub_info('Got start publishing msg: ' + str(msg))
@@ -658,8 +658,9 @@ class NepiFilePubImgApp(object):
                                         frame_3d = frame_3d,
                                         width_deg = self.width_deg,
                                         height_deg = self.height_deg,
-                                        device_mount_description = 'unknown')
-    
+                                        device_mount_description = 'unknown',
+                                        pub_twice = self.paused)
+
     delay = 0.1
     running = self.running
     if running == True and self.paused == False:
