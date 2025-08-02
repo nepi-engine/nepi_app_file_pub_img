@@ -60,8 +60,8 @@ class NepiFilePubImgApp(object):
   FACTORY_IMG_PUB_DELAY = 1.0
   MIN_SIZE = 240
   MAX_SIZE = 3700
-  STANDARD_IMAGE_SIZES = ['240 x 320', '480 x 640', '630 x 900','720 x 1080','955 x 600','1080 x 1440','1024 x 768 ','1980 x 2520','2048 x 1536','2580 x 2048','3648 x 2736']
-  FACTORY_IMG_SIZE = '630 x 900'
+  STANDARD_IMAGE_SIZES = ['Original','240 x 320', '480 x 640', '630 x 900','720 x 1080','955 x 600','1080 x 1440','1024 x 768 ','1980 x 2520','2048 x 1536','2580 x 2048','3648 x 2736']
+  FACTORY_IMG_SIZE = 'Original'
   IMG_PUB_ENCODING_OPTIONS = ["bgr8","rgb8","mono8"]
   FACTORY_IMG_ENCODING_OPTION = "bgr8" 
 
@@ -80,10 +80,9 @@ class NepiFilePubImgApp(object):
   image_if = None
 
   oneshot_offset = 1
-
-  default_size = FACTORY_IMG_SIZE.split('x')
-  width = int(default_size[1])
-  height = int(default_size[0])
+  
+  width = 0
+  height = 0
 
   width_deg = 100
   height_deg = 70
@@ -311,7 +310,7 @@ class NepiFilePubImgApp(object):
     ##############################
     # Start updater process
     nepi_sdk.start_timer_process(self.UPDATER_DELAY_SEC, self.updaterCb)
-
+    nepi_sdk.start_timer_process(1, self.publishCb, oneshot = True)
 
 
 
@@ -330,7 +329,10 @@ class NepiFilePubImgApp(object):
 
   def initCb(self,do_updates = False):
     if self.node_if is not None:
-      self.current_folder = self.node_if.get_param('current_folder')
+      current_folder = self.node_if.get_param('current_folder')
+      if os.path.exists(current_folder) == False:
+        current_folder = self.HOME_FOLDER
+      self.current_folder = current_folder
       self.size = self.node_if.get_param('size')
       self.encoding = self.node_if.get_param('encoding')
       self.random = self.node_if.get_param('random')
@@ -457,24 +459,29 @@ class NepiFilePubImgApp(object):
   def setSizeCb(self,msg):
     new_size = msg.data
     success = False
-    try:
-      size_list = new_size.split("x")
-      h = int(size_list[0])
-      w = int(size_list[1])
-      success = True
-    except Exception as e:
-      self.msg_if.pub_warn( "Unable to parse size message: " + new_size + " " + str(e) )
+    if new_size == 'Original':
+      self.size = new_size
+      if self.node_if is not None:
+            self.node_if.set_param('size',new_size)
+    else:
+      try:
+        size_list = new_size.split("x")
+        h = int(size_list[0])
+        w = int(size_list[1])
+        success = True
+      except Exception as e:
+        self.msg_if.pub_warn( "Unable to parse size message: " + new_size + " " + str(e) )
 
-    if success:
-      if h >= self.MIN_SIZE and h <= self.MAX_SIZE and w >= self.MIN_SIZE and w <= self.MAX_SIZE:
-        self.size = new_size
-        self.publish_status()
-        if self.node_if is not None:
-          self.node_if.set_param('size',new_size)
-        self.width = w
-        self.height = h
-      else:
-        self.msg_if.pub_warn( "Received size out of range: " + new_size )
+      if success:
+        if h >= self.MIN_SIZE and h <= self.MAX_SIZE and w >= self.MIN_SIZE and w <= self.MAX_SIZE:
+          self.size = new_size
+          self.publish_status()
+          if self.node_if is not None:
+            self.node_if.set_param('size',new_size)
+          self.width = w
+          self.height = h
+        else:
+          self.msg_if.pub_warn( "Received size out of range: " + new_size )
     self.publish_status()
 
   def setEncodingCb(self,msg):
@@ -523,6 +530,7 @@ class NepiFilePubImgApp(object):
     #self.msg_if.pub_warn("Last Folder: " + str(self.last_folder))
     # Update folder info
     if current_folder != self.last_folder:
+      self.stopPub()
       update_status = True
       if os.path.exists(current_folder):
         #self.msg_if.pub_warn("Current Folder Exists")
@@ -554,6 +562,7 @@ class NepiFilePubImgApp(object):
     self.startPub()
 
   def startPub(self):
+    self.msg_if.pub_warn("Start Pub Called")
     if self.image_if != None:
       current_folder = self.current_folder
       # Now start publishing images
@@ -568,7 +577,6 @@ class NepiFilePubImgApp(object):
           #self.msg_if.pub_warn("File Pub Count: " + str(self.num_files))
         if self.num_files > 0:
           self.current_ind = 0
-          nepi_sdk.start_timer_process(1, self.publishCb, oneshot = True)
           self.running = True
           self.publish_status()
           if self.node_if is not None:
@@ -580,7 +588,9 @@ class NepiFilePubImgApp(object):
     self.publish_status()
 
   def stopPubCb(self,msg):
-    self.msg_if.pub_info('Got start publishing msg: ' + str(msg))
+    self.stopPub()
+
+  def stopPub(self):
     self.running = False
     self.publish_status()
     self.current_file = "None"
@@ -627,7 +637,10 @@ class NepiFilePubImgApp(object):
         #self.msg_if.pub_info("Opening File: " + file2open)
         cv2_img = cv2.imread(file2open)
         #self.msg_if.pub_info("pub file: " + str(file2open))
-        cv2_img = cv2.resize(cv2_img,(self.width,self.height))
+        if self.size != 'Original' and self.width > 100 and self.height > 100:
+          cv2_img = cv2.resize(cv2_img,(self.width,self.height))
+        else:
+          [self.width,self.height] = cv2_img.shape[0:2]
 
         # Overlay Label
         if overlay == True:
